@@ -17,6 +17,7 @@
 do_start() {
 	openvfd_path="/usr/share/openvfd"
 	conf_file="${openvfd_path}/conf/${1}"
+	openvfd_service="${openvfd_path}/vfdservice"
 
 	if [ -f "${conf_file}" ]; then
 		source ${conf_file}
@@ -37,7 +38,16 @@ do_start() {
 		vfd_chars=${vfd_chars} vfd_dot_bits=${vfd_dot_bits} \
 		vfd_display_type=${vfd_display_type}
 
-	"${openvfd_path}/vfdservice" &
+	"${openvfd_service}" &
+
+	trap "killall ${openvfd_service}; rmmod openvfd; exit" 2 3 15
+
+	while :; do
+		for func in ${functions}; do
+			echo "turn led ${func} on ... "
+			echo "${func}" >/sys/class/leds/openvfd/led_on
+		done
+	done
 
 	echo "Enable LED display!"
 	exit 0
@@ -46,6 +56,7 @@ do_start() {
 do_stop() {
 	killall -9 vfdservice 2>/dev/null
 	rmmod openvfd -f 2>/dev/null
+
 	echo "Disable LED display!"
 	exit 0
 }
@@ -58,6 +69,7 @@ do_select_box() {
 		13 | hk1-x3)      do_start hk1-x3.conf ;;
 		14 | hk1box)      do_start hk1box.conf ;;
 		15 | tx3)         do_start tx3.conf ;;
+		99 | diy)         do_start diy.conf ;;
 		 0 | o | stop)    do_stop ;;
 		 1 | * | quit)    echo "quit!" && exit 0 ;;
 	esac
@@ -75,6 +87,7 @@ if [ -z "${1}" ]; then
         │        13. hk1-x3             │
         │        14. hk1box             │
         │        15. tx3                │
+        │        99. diy                │
         │                               │
         ├────[ Disable LED or Quit ]────┤
         │                               │
