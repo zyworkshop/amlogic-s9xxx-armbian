@@ -70,7 +70,6 @@ echo "K510: [ ${K510} ]"
 ROOTFS_UUID="$(cat /proc/sys/kernel/random/uuid)"
 [ -z "${ROOTFS_UUID}" ] && ROOTFS_UUID="$(uuidgen)"
 [ -z "${ROOTFS_UUID}" ] && echo "The new UUID is invalid, cannot continue." && exit 1
-echo "ROOTFS_UUID: ${ROOTFS_UUID}"
 
 # Set model list, begin ------------
 AMLOGIC_MODEL_LIST="
@@ -285,7 +284,8 @@ echo "The boot file is [ ${boot_conf_file} ]"
 #Get the current UUID, such as [ dc20e16b-1234-5678-a636-7945a906d0c6 ]
 CURRENT_ROOTFS_UUID="$(cat ${DIR_INSTALL}/${boot_conf_file} 2>/dev/null | grep -oE "root=UUID.*" | sed -e 's/^.*root=UUID=//' -e 's/ .*$//')"
 [ -z "${CURRENT_ROOTFS_UUID}" ] && echo "The current UUID is invalid, cannot continue." && exit 1
-echo "CURRENT_ROOTFS_UUID: [ ${CURRENT_ROOTFS_UUID} ]"
+echo "Current ROOTFS UUID [ ${CURRENT_ROOTFS_UUID} ]"
+echo "Replace ROOTFS UUID [ ${ROOTFS_UUID} ]"
 #
 sed -i "s|${CURRENT_ROOTFS_UUID}|${ROOTFS_UUID}|g" ${DIR_INSTALL}/${boot_conf_file}
 sed -i "s|meson.*.dtb|${FDTFILE}|g" ${DIR_INSTALL}/${boot_conf_file}
@@ -353,7 +353,7 @@ sync
 echo "Copy complete."
 
 echo "Edit the etc/fstab file."
-sed -i "s|${CURRENT_ROOTFS_UUID}|UUID=${ROOTFS_UUID}|g" ${DIR_INSTALL}/etc/fstab
+sed -i "s|${CURRENT_ROOTFS_UUID}|${ROOTFS_UUID}|g" ${DIR_INSTALL}/etc/fstab
 sed -i "s|LABEL=BOOT|LABEL=BOOT_EMMC|g" ${DIR_INSTALL}/etc/fstab
 
 echo "Update the relevant parameters"
